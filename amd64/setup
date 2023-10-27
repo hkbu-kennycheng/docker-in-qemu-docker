@@ -1,0 +1,34 @@
+#!/usr/bin/expect -f
+
+# Wait enough (forever) until a long-time boot
+set timeout -1
+
+# Start the guest VM
+spawn telnet -e ! localhost 4444
+
+# Wait until the guest VM is ready
+expect "void-live login: "
+send "root\n"
+expect "Password: "
+send "voidlinux\n"
+
+expect "# "
+send "mkdir -p /var/lib/docker && mkfs.ext4 /dev/sda && mount /dev/sda /var/lib/docker\n"
+
+expect "# "
+# Wait for network to be ready
+sleep 20
+send "xbps-install -Sy && xbps-install -yu xbps\n"
+
+expect "# "
+send "xbps-install -Sy docker\n"
+
+expect "# "
+send "dockerd --iptables=false -H 0.0.0.0:2375\n"
+
+expect "API listen on "
+send "!\n"
+expect "telnet>"
+send "quit\n"
+
+exit
